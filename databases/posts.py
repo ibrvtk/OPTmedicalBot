@@ -1,0 +1,43 @@
+import aiosqlite
+
+import datetime
+
+
+
+async def create():
+    async with aiosqlite.connect('databases/posts.db') as db:
+        await db.execute("""
+            CREATE TABLE IF NOT EXISTS posts (
+                post_id INTEGER PRIMARY KEY,
+                text TEXT,
+                post_time DATETIME,
+                channel_id INTEGER,
+                status TEXT
+            )
+        """)
+        await db.commit()
+
+
+async def add(text: str, post_time: datetime, channel_id: int):
+    async with aiosqlite.connect('databases/posts.db') as db:
+        cursor = await db.execute("""
+            INSERT INTO posts (text, post_time, channel_id, status)
+            VALUES (?, ?, ?, 'planned')
+        """, (text, post_time, channel_id))
+        await db.commit()
+        return cursor.lastrowid
+
+
+async def delete(post_id: int):
+    async with aiosqlite.connect('databases/posts.db') as db:
+        await db.execute("DELETE FROM posts WHERE post_id = ?", (post_id,))
+        await db.commit()
+
+
+async def get_due_posts():
+    """Получает посты, которые уже пора отправить."""
+    now = datetime.datetime.now()
+    async with aiosqlite.connect('databases/posts.db') as db:
+        db.row_factory = aiosqlite.Row  # Позволяет обращаться к столбцам по имени
+        async with db.execute("SELECT post_id, text, channel_id FROM posts WHERE post_time <= ?", (now,)) as cursor:
+            return await cursor.fetchall()
