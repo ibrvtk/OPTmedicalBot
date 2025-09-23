@@ -10,7 +10,7 @@ async def create():
             CREATE TABLE IF NOT EXISTS posts (
                 post_id INTEGER PRIMARY KEY,
                 text TEXT,
-                post_time DATETIME,
+                time DATETIME,
                 channel_id INTEGER,
                 status TEXT
             )
@@ -18,12 +18,12 @@ async def create():
         await db.commit()
 
 
-async def add(text: str, post_time: datetime, channel_id: int):
+async def add(text: str, time: datetime, channel_id: int):
     async with aiosqlite.connect('databases/posts.db') as db:
         cursor = await db.execute("""
-            INSERT INTO posts (text, post_time, channel_id, status)
+            INSERT INTO posts (text, time, channel_id, status)
             VALUES (?, ?, ?, 'planned')
-        """, (text, post_time, channel_id))
+        """, (text, time, channel_id))
         await db.commit()
         return cursor.lastrowid
 
@@ -39,5 +39,5 @@ async def get_due_posts():
     now = datetime.datetime.now()
     async with aiosqlite.connect('databases/posts.db') as db:
         db.row_factory = aiosqlite.Row  # Позволяет обращаться к столбцам по имени
-        async with db.execute("SELECT post_id, text, channel_id FROM posts WHERE post_time <= ?", (now,)) as cursor:
+        async with db.execute("SELECT post_id, text, channel_id FROM posts WHERE time <= ?", (now,)) as cursor:
             return await cursor.fetchall()

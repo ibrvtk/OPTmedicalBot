@@ -1,17 +1,12 @@
-from config import CHANNEL, ADMINCHATS, ADMINUSERS, userData, shopName, shopDescription
+from config import ADMINCHATS, ADMINUSERS, userData, shopName, shopDescription
 import app.keyboards as kb
 
-import databases.assortment as dba
-import databases.posts as dbp
-
 import aiosqlite
-from datetime import datetime
 
 from aiogram import F, Router
 from aiogram.filters import Command
 from aiogram.types import Message
-from aiogram.fsm.state import State, StatesGroup
-from aiogram.fsm.context import FSMContext
+
 
 handlers = Router()
 
@@ -21,7 +16,6 @@ handlers = Router()
 async def cmdStart(message: Message):
     userData[message.from_user.id] = {
         'user_id': message.from_user.id,
-        'inReg': "False",
         'inAssortment': "False",
         'assortmentCart': "None",
         'assortmentCount': 1,
@@ -33,12 +27,13 @@ async def cmdStart(message: Message):
                             reply_markup=kb.chooseService)
 
 
-# 🛒 Ассортимент
-@handlers.message(F.text == "🛒 Ассортимент")
+# 📄 Ассортимент
+@handlers.message(F.text == "📄 Ассортимент")
 async def fAssortment(message: Message):
     userData[message.from_user.id]['inAssortment'] = "True"
     await message.answer(f"{shopName}\nАссортимент магазина и онлайн заказ.",
-                         reply_markup=await kb.serviceAssortment())
+                         reply_markup=await kb.assortmentProducts())
+
 
 @handlers.message(F.text == "🛒 Корзина")
 async def fAssortmentCart(message: Message):
@@ -47,14 +42,8 @@ async def fAssortmentCart(message: Message):
     else:
         await message.reply(f"🛒 <b>Корзина</b>\n{userData[message.from_user.id]['assortmentCart']}\n"
                             f"<u>Итоговая сумма: {userData[message.from_user.id]['assortmentChequeGlobal']} ₽</u>",
-                            reply_markup=kb.assortmentCart)
+                            reply_markup=kb.cartKeyboard)
         
-@handlers.message(F.text == "🔙 Назад")
-async def fAssortmentBack(message: Message):
-    userData[message.from_user.id]['inAssortment'] = "False"
-    await message.answer(f"{shopName}{shopDescription}",
-                         reply_markup=kb.chooseService)
-
 @handlers.message(F.text.contains("—") & F.text.contains("₽"))
 async def fAssortmentProduct(message: Message):
     if userData[message.from_user.id]['inAssortment'] != "True":
@@ -82,15 +71,23 @@ async def fAssortmentProduct(message: Message):
                         reply_markup=kb.assortmentPageButtons)
 
 
+@handlers.message(F.text == "🔙 Назад")
+async def fAssortmentBack(message: Message):
+    userData[message.from_user.id]['inAssortment'] = "False"
+    await message.answer(f"{shopName}{shopDescription}",
+                         reply_markup=kb.chooseService)
+
+
 # Админский раздел
 # /assortment
 @handlers.message(Command("assortment"), (F.chat.id.in_(ADMINCHATS)) | (F.from_user.id.in_(ADMINUSERS)))
 async def amdcmdPost(message: Message):
-    await message.answer("Управление ассортиментом:", 
+    await message.answer("Управление ассортиментом.", 
                         reply_markup=kb.assortmentKeyboard)
-    
+
+
 # /posts
 @handlers.message(Command("posts"), (F.chat.id.in_(ADMINCHATS)) | (F.from_user.id.in_(ADMINUSERS)))
 async def amdcmdPost(message: Message):
-    await message.answer("Управление отложенными постами:", 
+    await message.answer("Управление отложенными постами.", 
                         reply_markup=kb.postsKeyboard)

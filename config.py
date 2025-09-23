@@ -3,13 +3,13 @@ from aiogram.client.default import DefaultBotProperties
 
 
 
-TOKEN = '' #*
+TOKEN = '' # Токен бота.
 bot = Bot(token=TOKEN, default=DefaultBotProperties(parse_mode='HTML'))
 
 
-CHANNEL = '' #*
-ADMINCHATS = [-100] #*
-ADMINUSERS = [] #*
+CHANNEL = -100 # Telegram ID канала, куда будут присылаться посты из команды /posts.
+ADMINCHATS = [-100] # Список бесед админов. В них будут присылаться уведомления о заказах и через них можно настраивать бота.
+ADMINUSERS = [] # Список админов. Им будут присылаться уведомления о заказах и они могут настраивать бота в ЛС с ним.
 
 userData = {}
 

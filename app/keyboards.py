@@ -11,18 +11,16 @@ from aiogram.utils.keyboard import ReplyKeyboardBuilder, InlineKeyboardBuilder
 
 
 chooseService = ReplyKeyboardMarkup(keyboard=[
-    [KeyboardButton(text="📄 Запись")],
-    [KeyboardButton(text="🛒 Ассортимент")]
+    [KeyboardButton(text="📄 Ассортимент")],
+    [KeyboardButton(text="🛒 Корзина")]
 ],
 resize_keyboard=True,
 input_field_placeholder=f"{kayboardPlaceholderChoose}")
 
 
-# 🛒 Ассортимент
-async def serviceAssortment():
+# 📄 Ассортимент
+async def assortmentProducts():
     keyboard = ReplyKeyboardBuilder()
-
-    keyboard.add(KeyboardButton(text="🛒 Корзина"))
     keyboard.add(KeyboardButton(text="🔙 Назад"))
 
     async with aiosqlite.connect('databases/assortment.db') as db:
@@ -47,7 +45,8 @@ assortmentPageButtons = InlineKeyboardMarkup(inline_keyboard=[
      InlineKeyboardButton(text="➖", callback_data="minus")]
 ])
 
-assortmentCart = InlineKeyboardMarkup(inline_keyboard=[
+
+cartKeyboard = InlineKeyboardMarkup(inline_keyboard=[
     [InlineKeyboardButton(text="📦 Приступить к оформлению", callback_data="cartBuy"),
      InlineKeyboardButton(text="🧹 Очистить корзину", callback_data="cartClear")]
 ])
@@ -62,6 +61,7 @@ assortmentKeyboard = InlineKeyboardMarkup(inline_keyboard=[
 
 async def assortmentList():
     keyboard = InlineKeyboardBuilder()
+    keyboard.add(InlineKeyboardButton(text="🔙 Назад", callback_data="assortmentListBack"))
     
     async with aiosqlite.connect('databases/assortment.db') as db:
         async with db.execute("SELECT number, name FROM assortment") as cursor:
@@ -75,18 +75,10 @@ async def assortmentList():
 def assortmentListActions_(productNumber: int):
     keyboard = InlineKeyboardBuilder()
     
-    keyboard.add(InlineKeyboardButton(
-        text="❌ Удалить", 
-        callback_data=f"assortmentListActionsDelete_{productNumber}"
-    ))
-    keyboard.add(InlineKeyboardButton(
-        text="🔥 Добавить/убрать скидку", 
-        callback_data=f"assortmentListActionsDiscount_{productNumber}"
-    ))
-    keyboard.add(InlineKeyboardButton(
-        text="🔙 Назад", 
-        callback_data="assortmentListActionsBack"
-    ))
+    keyboard.add(InlineKeyboardButton(text="🔥 Добавить/убрать скидку", callback_data=f"assortmentListActionsNewPriceDiscount_{productNumber}"))
+    keyboard.add(InlineKeyboardButton(text="📜 Изменить описание", callback_data=f"assortmentListActionsNewDescription_{productNumber}"))
+    keyboard.add(InlineKeyboardButton(text="❌ Удалить", callback_data=f"assortmentListActionsDelete_{productNumber}"))
+    keyboard.add(InlineKeyboardButton(text="🔙 Назад", callback_data="assortmentListActionsBack"))
     
     return keyboard.adjust(3).as_markup()
 
@@ -96,3 +88,26 @@ postsKeyboard = InlineKeyboardMarkup(inline_keyboard=[
     [InlineKeyboardButton(text="Написать пост", callback_data="postsAdd"),
      InlineKeyboardButton(text="Список постов", callback_data="postsList")]
 ])
+
+async def postsList():
+    keyboard = InlineKeyboardBuilder()
+    keyboard.add(InlineKeyboardButton(text="🔙 Назад", callback_data="postsListBack"))
+    
+    async with aiosqlite.connect('databases/posts.db') as db:
+        async with db.execute("SELECT post_id, text FROM posts") as cursor:
+            posts = await cursor.fetchall()
+
+    for post_id, text in posts:
+        keyboard.add(InlineKeyboardButton(text=f"{text}", callback_data=f"post_{post_id}"))
+
+    return keyboard.adjust(2).as_markup()
+
+def postsListActions_(postId: int):
+    keyboard = InlineKeyboardBuilder()
+    
+    keyboard.add(InlineKeyboardButton(text="⏰ Изменить время", callback_data=f"postsListActionsNewTime_{postId}"))
+    keyboard.add(InlineKeyboardButton(text="📜 Изменить текст", callback_data=f"postsListActionsNewText_{postId}"))
+    keyboard.add(InlineKeyboardButton(text="❌ Удалить", callback_data=f"postsActionsDelete_{postId}"))
+    keyboard.add(InlineKeyboardButton(text="🔙 Назад", callback_data="postsListActionsBack"))
+    
+    return keyboard.adjust(3).as_markup()
