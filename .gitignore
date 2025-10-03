@@ -1,0 +1,6 @@
+.venv
+.env
+*pycache*
+
+PLANLIST.txt
+src/database/blacklist.py
